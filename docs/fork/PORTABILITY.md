@@ -60,7 +60,7 @@ Support is not declared until gates 1–6 have recorded evidence from a real run
 
 ## Reference material
 
-- pstack README: ../..//pstack/README.md (repository root pstack/README.md)
+- pstack README: [pstack/README.md](../../pstack/README.md)
 - Existing Claude adapter: pstack/docs/harness/claude-code.md
 - Codex skills: https://developers.openai.com/api/docs/guides/tools-skills
 - Codex repository guidance: https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex
