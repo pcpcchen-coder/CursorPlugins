@@ -129,13 +129,13 @@ Actions workflow `.github/workflows/pstack-dashboard.yml` tests, generates the i
 - Native pstack runtime instrumentation (currently agents must explicitly call the recorder).
 - Automated evidence validation (CI checks, SHA matching, artifact provenance), heartbeat tracking, replay diff, and operator-reviewed confidence scoring.
 
-## AIOS installed (local-only; 2026-10-21)
+## AIOS public source (2026-10-21)
 
 - AIOS's original pinned pstack 0.15.29, SKILL links and vendor lock remain intact.
 - The optional recorder is now installed on [AIOS main](https://github.com/pcpcchen-coder/AIOS/tree/main/tools).
 - [AIOS CI smoke](https://github.com/pcpcchen-coder/AIOS/actions/runs/39538575650) ran actual recorder unit tests, checked pinned pstack and uploaded a temporary smoke artifact.
-- Central registry shows **INSTALLED**, not **REPORTING**, until a **real pstack engineering Run** is explicitly published with reviewed metadata. The CI smoke does not represent a pstack task.
-- CI artifacts and developer-local runs are not automatically copied to the public Observatory.
+- AIOS now publishes reviewed public run summaries on the separate `telemetry/pstack` branch. Dashboard discovers source reports as **REPORTING** when public data is reachable; CI smoke is still not treated as a pstack Agent task.
+- Real Cursor/Codex sessions should invoke the public-safe `tools/pstack-observe-live.mjs` wrapper with the repo-owner-approved acknowledgment flag and AIOS GitHub authentication. Local-only fallback remains available.
 
 
 ## Retrofit onboarding, even after pstack has been used
@@ -159,3 +159,11 @@ Source files:
 - AIOS publishes from \`.github/workflows/pstack-public-e2e.yml\` via the same-repository \`GITHUB_TOKEN\` (GitHub Actions workflow, no token in the browser).
 
 Live refresh is best-effort and subject to browser/CDN caching and GitHub outages; it is not a websocket trace.
+
+
+### E2E evidence
+
+- [First successful published CI investigation](https://github.com/pcpcchen-coder/AIOS/actions/runs/39545340318).
+- [Second successful CI investigation and live-wrapper integration](https://github.com/pcpcchen-coder/AIOS/actions/runs/39545880704).
+- [Public AIOS feed](https://github.com/pcpcchen-coder/AIOS/blob/telemetry/pstack/observability/public/index.json) keeps the exact source run IDs, status, timestamps, per-step completion and origin label.
+- **Native IDE Agent execution not yet measured in CI.** These investigations were executed by the workflow and are deliberately marked `investigation-ci`.
