@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "repo": "pcpcchen-coder/AIOS",
+      "index_url": "https://raw.githubusercontent.com/pcpcchen-coder/AIOS/telemetry/pstack/observability/public/index.json"
+    }
+  ]
+}
