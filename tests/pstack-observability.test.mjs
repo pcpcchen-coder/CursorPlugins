@@ -52,3 +52,13 @@ test('index build succeeds on current repository and is deterministic',()=>{
   const b=run(builder,[]);assert.equal(b.status,0,b.stderr);
   assert.equal(readFileSync(join(root,'dashboard','data','index.json'),'utf8'),idx);
 });
+
+test('AIOS registry identifies local-only installation without pretending to report runs',()=>{
+  const registry=JSON.parse(readFileSync(join(root,'dashboard','projects.json'),'utf8'));
+  const aios=registry.projects.find(p=>p.repo==='pcpcchen-coder/AIOS');
+  assert.equal(aios.observer_status,'installed-local-only');
+  assert.match(aios.observer_ci_url,/^https:\/\/github\.com\/pcpcchen-coder\/AIOS\/actions\/runs\/\d+$/);
+  const check=run(builder,[]);assert.equal(check.status,0,check.stderr);
+  const built=JSON.parse(readFileSync(join(root,'dashboard','data','index.json'),'utf8'));
+  assert.equal(built.projects.find(p=>p.repo===aios.repo).observer_status,'installed-local-only');
+});

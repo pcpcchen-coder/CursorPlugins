@@ -1,5 +1,11 @@
 {
   "projects": [
-    {"repo": "pcpcchen-coder/AIOS", "name": "AIOS", "note": "Candidate: pstack was previously used; instrumentation not yet installed."}
+    {
+      "repo": "pcpcchen-coder/AIOS",
+      "name": "AIOS",
+      "observer_status": "installed-local-only",
+      "observer_ci_url": "https://github.com/pcpcchen-coder/AIOS/actions/runs/39538575650",
+      "note": "Recorder installed and verified on AIOS main (346668e); local-only instrumentation. No actual pstack task has been published."
+    }
   ]
 }
