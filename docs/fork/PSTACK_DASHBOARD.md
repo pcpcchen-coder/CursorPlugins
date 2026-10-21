@@ -128,3 +128,11 @@ Actions workflow `.github/workflows/pstack-dashboard.yml` tests, generates the i
 - A **private** telemetry store with authenticated viewer for confidential projects.
 - Native pstack runtime instrumentation (currently agents must explicitly call the recorder).
 - Automated evidence validation (CI checks, SHA matching, artifact provenance), heartbeat tracking, replay diff, and operator-reviewed confidence scoring.
+
+## AIOS installed (local-only; 2026-10-21)
+
+- AIOS's original pinned pstack 0.15.29, SKILL links and vendor lock remain intact.
+- The optional recorder is now installed on [AIOS main](https://github.com/pcpcchen-coder/AIOS/tree/main/tools).
+- [AIOS CI smoke](https://github.com/pcpcchen-coder/AIOS/actions/runs/39538575650) ran actual recorder unit tests, checked pinned pstack and uploaded a temporary smoke artifact.
+- Central registry shows **INSTALLED**, not **REPORTING**, until a **real pstack engineering Run** is explicitly published with reviewed metadata. The CI smoke does not represent a pstack task.
+- CI artifacts and developer-local runs are not automatically copied to the public Observatory.

@@ -43,14 +43,21 @@ function renderCoverage() {
   const all = allProjects();
   const area=$('coverage'); area.replaceChildren();
   const monitored=all.filter(p=>state.rows.some(r=>r.repo===p.repo)).length;
-  $('coverageCount').textContent=`${monitored}/${all.length} reporting`;
+  const installed=all.filter(p=>p.observer_status==='installed-local-only' && !state.rows.some(r=>r.repo===p.repo)).length;
+  $('coverageCount').textContent=`${monitored}/${all.length} reporting · ${installed} installed, awaiting runs`;
   for (const p of all) {
     const recent = state.rows.find(r=>r.repo===p.repo);
     const node=el('div','coverage-item');
     const logo=el('span','coverage-icon',p.name?.[0]?.toUpperCase()||'◈');
     const body=el('div','coverage-body');
-    append(body,el('strong','',p.name || p.repo),el('small','',recent?`${recent.status.toUpperCase()} · ${fmt(recent.updated_at)}`:'Not instrumented · 尚未接入'));
-    append(node,logo,body,chip(recent?.status||'pending'));
+    const localOnly=p.observer_status==='installed-local-only';
+    const coverageText=recent ? `${recent.status.toUpperCase()} · ${fmt(recent.updated_at)}` : localOnly ? 'Recorder installed · awaiting first authorized pstack run' : 'Not instrumented · 尚未接入';
+    append(body,el('strong','',p.name || p.repo),el('small','',coverageText));
+    if (!recent && localOnly && /^https:\/\/github\.com\//.test(p.observer_ci_url || '')) {
+      const evidence=el('a','','↗ CI smoke evidence (not pstack task)');
+      evidence.href=p.observer_ci_url; evidence.target='_blank'; evidence.rel='noopener noreferrer'; body.append(evidence);
+    }
+    append(node,logo,body,recent ? chip(recent.status) : localOnly ? el('span','status pending','INSTALLED') : chip('pending'));
     area.append(node);
   }
   const nav=$('repoNav');nav.replaceChildren();
