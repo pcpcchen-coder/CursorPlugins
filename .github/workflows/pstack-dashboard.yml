@@ -6,10 +6,12 @@ on:
       - custom/pstack
     paths:
       - "dashboard/**"
+      - "tests/pstack-retrofit.test.mjs"
       - "scripts/pstack-observe.mjs"
       - "scripts/pstack-observer-install.mjs"
       - "scripts/pstack-dashboard-build.mjs"
       - "tests/pstack-observability.test.mjs"
+      - "tests/pstack-retrofit.test.mjs"
       - "docs/fork/PSTACK_DASHBOARD.md"
       - ".github/workflows/pstack-dashboard.yml"
   pull_request:
@@ -35,7 +37,9 @@ jobs:
         with:
           node-version: "20"
       - name: Test recorder, installer and index
-        run: node --test tests/pstack-observability.test.mjs
+        run: node --test tests/pstack-observability.test.mjs tests/pstack-retrofit.test.mjs
+      - name: Check frontend JavaScript syntax
+        run: node --check dashboard/app.js
       - name: Build static dashboard index
         run: node scripts/pstack-dashboard-build.mjs
       - name: Upload static preview artifact
