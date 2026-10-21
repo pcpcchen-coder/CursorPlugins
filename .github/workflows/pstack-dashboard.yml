@@ -66,12 +66,22 @@ jobs:
       - name: Build latest index
         run: node scripts/pstack-dashboard-build.mjs
       - name: Configure Pages
+        id: pages
+        continue-on-error: true
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - uses: actions/upload-pages-artifact@v3
+      - name: Explain one-time Pages activation
+        if: steps.pages.outcome == 'failure'
+        run: |
+          echo "::warning::GitHub Pages is not enabled. Repository administrator: Settings > Pages > Build and deployment > Source: GitHub Actions. Then re-run this workflow."
+          echo "Static dashboard remains available in the validate job artifact: pstack-dashboard-static."
+      - name: Upload Pages artifact
+        if: steps.pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dashboard/
       - name: Deploy dashboard
+        if: steps.pages.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4
