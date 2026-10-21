@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-21T02:00:00.000Z",
+  "projects": [{"repo":"pcpcchen-coder/AIOS","name":"AIOS (DEMO)"},{"repo":"pcpcchen-coder/DigitalMe","name":"DigitalMe (DEMO)"}],
+  "runs": [
+    {"repo":"pcpcchen-coder/AIOS","run_id":"demo-aios-1","title":"Fix panel scroll drift (DEMO)","playbook":"bug-fix","status":"running","updated_at":"2026-10-21T02:00:00.000Z","started_at":"2026-10-21T01:20:00.000Z","ended_at":null,"branch":"feature/demo","commit_sha":"","passed_steps":2,"total_steps":4,"path":"data/demo-run-aios.json"},
+    {"repo":"pcpcchen-coder/DigitalMe","run_id":"demo-digitalme-1","title":"Face sync test (DEMO)","playbook":"feature","status":"failed","updated_at":"2026-10-21T01:50:00.000Z","started_at":"2026-10-21T01:00:00.000Z","ended_at":"2026-10-21T01:50:00.000Z","branch":"feature/demo","commit_sha":"","passed_steps":1,"total_steps":3,"path":"data/demo-run-digitalme.json"}
+  ]
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Pstack Observatory — cross-repository run progress and evidence dashboard">
+  <title>Pstack Observatory · Agent execution observability</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="logo" href="./" aria-label="Pstack Observatory home"><span class="logo-square">◈</span><span>PSTACK<span class="light">/OBSERVE</span></span></a>
+      <p class="nav-title">WORKSPACE</p>
+      <div class="nav-item selected">▤ <span>Execution overview</span></div>
+      <a class="nav-item" href="https://github.com/pcpcchen-coder/CursorPlugins/tree/custom/pstack/docs/fork" target="_blank" rel="noopener noreferrer">◫ <span>Documentation</span><span class="external">↗</span></a>
+      <p class="nav-title sources-label">MONITORED PROJECTS</p>
+      <div id="repoNav" class="repo-nav" aria-label="Repository selector"></div>
+      <div class="aside-bottom">
+        <div class="health-dot"></div><span>Git-backed snapshots</span>
+        <small>Telemetry is self-reported, not independently verified.</small>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">Workspace <span>/</span> <strong>Execution overview</strong></div>
+        <div class="top-actions"><span id="dataSource" class="source-label">LIVE DATA</span><button id="reloadBtn" class="button ghost" type="button">↻ Refresh</button><a class="button primary" href="https://github.com/pcpcchen-coder/CursorPlugins/blob/custom/pstack/docs/fork/PSTACK_DASHBOARD.md" target="_blank" rel="noopener noreferrer">+ Connect a repo <span>↗</span></a></div>
+      </header>
+      <div class="content">
+        <div class="heading-row">
+          <div><div class="eyebrow"><span class="eyebrow-dot"></span> AGENT OPERATIONS CENTER</div><h1>Execution <span>observatory</span></h1><p class="lede">每個 Repository · 每次 pstack Run · 每個步驟、證據與阻塞狀態，都在同一個地方。</p></div>
+          <div class="updated">LAST EVENT <strong id="lastUpdated">—</strong><div id="loadError" class="load-error" role="status"></div></div>
+        </div>
+        <div class="kpis">
+          <div class="metric"><div class="metric-label">REPOSITORIES <span>▦</span></div><strong id="repoCount">0</strong><small id="repoHint">Registered / discovered</small></div>
+          <div class="metric"><div class="metric-label">RUNNING <span class="cyan-text">◌</span></div><strong id="runningCount">0</strong><small id="runningHint">Reported active</small></div>
+          <div class="metric"><div class="metric-label">COMPLETED <span class="green-text">✓</span></div><strong id="passedCount">0</strong><small>Reported as passed</small></div>
+          <div class="metric"><div class="metric-label">FAILED / BLOCKED <span class="red-text">!</span></div><strong id="failedCount">0</strong><small>Needs investigation</small></div>
+        </div>
+        <section class="panel overview-panel">
+          <div class="panel-head"><div><h2>Repository coverage</h2><p>有 Run 回報才表示已接入監控；未接入不等於沒有使用 pstack。</p></div><div class="mini-count" id="coverageCount">0 monitored</div></div>
+          <div id="coverage" class="coverage"></div>
+        </section>
+        <div class="two-col">
+          <section class="panel runs-panel">
+            <div class="panel-head"><div><h2>Execution runs</h2><p>根據已發布的快照顯示，不會推測未知進度。</p></div><span id="runCount" class="mini-count">0 runs</span></div>
+            <div class="filter-row"><input id="searchInput" type="search" aria-label="Filter runs" placeholder="Search repo, title, playbook..."/><select id="statusFilter" aria-label="Status filter"><option value="all">All statuses</option><option value="running">Running</option><option value="passed">Passed</option><option value="failed">Failed</option><option value="blocked">Blocked</option><option value="cancelled">Cancelled</option></select></div>
+            <div id="runList" class="run-list" aria-live="polite"></div>
+          </section>
+          <section class="panel detail-panel"><div class="panel-head"><div><h2>Run inspector</h2><p>流程、時間線與可追溯驗證證據</p></div><span id="detailStatus" class="status neutral">NO RUN</span></div><div id="detail" class="detail"><div class="empty-state"><div class="empty-icon">⌁</div><h3>Select a run</h3><p>選擇左側 Run，即可檢視每個步驟的狀態、紀錄與證據。</p></div></div></section>
+        </div>
+        <div class="bottom-line"><span>◈ PSTACK OBSERVATORY / FORK EDITION</span><span>Reported ≠ verified · <a href="https://github.com/pcpcchen-coder/CursorPlugins/tree/custom/pstack">Source on GitHub ↗</a></span></div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

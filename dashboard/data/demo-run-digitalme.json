@@ -1,0 +1,5 @@
+{
+  "schema_version":1,"repo":"pcpcchen-coder/DigitalMe","run_id":"demo-digitalme-1","title":"Face sync test (DEMO)","playbook":"feature","status":"failed","started_at":"2026-10-21T01:00:00.000Z","updated_at":"2026-10-21T01:50:00.000Z","ended_at":"2026-10-21T01:50:00.000Z",
+  "steps":[{"id":"plan","title":"Define acceptance criteria","status":"passed","started_at":"2026-10-21T01:01:00Z","ended_at":"2026-10-21T01:10:00Z","note":"Example plan only","evidence":[]},{"id":"implement","title":"Integrate model","status":"failed","started_at":"2026-10-21T01:12:00Z","ended_at":"2026-10-21T01:50:00Z","note":"Mock device unavailable — demonstration only","evidence":[]},{"id":"verify","title":"End-to-end validation","status":"pending","started_at":null,"ended_at":null,"note":"","evidence":[]}],
+  "events":[{"at":"2026-10-21T01:00:00Z","type":"run_started","step_id":null,"status":"running"},{"at":"2026-10-21T01:50:00Z","type":"run_finished","step_id":null,"status":"failed","note":"DEMO only"}]
+}

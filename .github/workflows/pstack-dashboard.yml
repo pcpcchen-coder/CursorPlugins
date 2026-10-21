@@ -1,0 +1,77 @@
+name: Pstack dashboard
+
+on:
+  push:
+    branches:
+      - custom/pstack
+    paths:
+      - "dashboard/**"
+      - "scripts/pstack-observe.mjs"
+      - "scripts/pstack-observer-install.mjs"
+      - "scripts/pstack-dashboard-build.mjs"
+      - "tests/pstack-observability.test.mjs"
+      - "docs/fork/PSTACK_DASHBOARD.md"
+      - ".github/workflows/pstack-dashboard.yml"
+  pull_request:
+    paths:
+      - "dashboard/**"
+      - "scripts/pstack-observe.mjs"
+      - "scripts/pstack-observer-install.mjs"
+      - "scripts/pstack-dashboard-build.mjs"
+      - "tests/pstack-observability.test.mjs"
+      - "docs/fork/PSTACK_DASHBOARD.md"
+      - ".github/workflows/pstack-dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Test recorder, installer and index
+        run: node --test tests/pstack-observability.test.mjs
+      - name: Build static dashboard index
+        run: node scripts/pstack-dashboard-build.mjs
+      - name: Upload static preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pstack-dashboard-static
+          path: dashboard/
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/custom/pstack'
+    needs: validate
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pstack-dashboard-pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build latest index
+        run: node scripts/pstack-dashboard-build.mjs
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard/
+      - name: Deploy dashboard
+        id: deployment
+        uses: actions/deploy-pages@v4
