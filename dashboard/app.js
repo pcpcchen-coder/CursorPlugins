@@ -93,6 +93,7 @@ function renderRuns() {
     const meta=el('div','run-meta',`${run.repo}   ·   ${run.playbook||'unspecified'}   ·   ${fmt(run.updated_at)}`);
     const pRow=el('div','progress-row');append(pRow,progress(run),el('span','pct',`${percent(run)}%`));
     append(button,head,meta,pRow);
+    if(run.provenance) button.append(el('div','notice','Source: '+run.provenance));
     if (state.mode!=='demo' && stale(run)) button.append(el('div','notice','⚠ No update for >30 min; state may be stale'));
     button.addEventListener('click',()=>{state.selected=run;renderRuns();});
     container.append(button);
@@ -118,6 +119,7 @@ async function renderDetails(summary) {
   const meta=el('div','detail-meta');
   detailField(meta,'Repository:',summary.repo,`https://github.com/${summary.repo}`);
   detailField(meta,'Playbook:',summary.playbook||'unspecified');
+  if(summary.provenance)detailField(meta,'Source:',summary.provenance);
   detailField(meta,'Updated:',fmt(summary.updated_at));
   if(summary.branch)detailField(meta,'Branch:',summary.branch);
   if(summary.commit_sha)detailField(meta,'Commit:',summary.commit_sha.slice(0,10),`https://github.com/${summary.repo}/commit/${summary.commit_sha}`);
