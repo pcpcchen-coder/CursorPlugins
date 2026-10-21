@@ -1,60 +1,63 @@
 #!/usr/bin/env node
-/** Explicit local installer for pstack observation on a target project. No telemetry is sent. */
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
-import { dirname, resolve, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-const home = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const argv = process.argv.slice(2);
-const flag = name => { const i=argv.indexOf(`--${name}`); return i<0?null:argv[i+1]; };
-const targetArg = flag('target'), repo = flag('repo');
-const markerBegin = '<!-- PSTACK_OBSERVABILITY_BEGIN -->';
-const markerEnd = '<!-- PSTACK_OBSERVABILITY_END -->';
-if (!targetArg || !/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/.test(repo||'')) {
-  console.error('Usage: node scripts/pstack-observer-install.mjs --target ../AIOS --repo pcpcchen-coder/AIOS');
-  process.exit(2);
+// Idempotent retrofit for existing pstack repos; never rewrites original skill/vendor files.
+import {readFileSync,writeFileSync,mkdirSync,existsSync,copyFileSync} from 'node:fs';
+import {dirname,resolve,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const args=process.argv.slice(2);
+const param=name=>{const p=args.indexOf('--'+name);return p===-1?null:args[p+1];};
+const where=param('target'),repo=param('repo'),dry=args.includes('--dry-run');
+if(!where||!/^[\w.-]+\/[\w.-]+$/.test(repo||'')){
+ console.error('Usage: node scripts/pstack-observer-install.mjs --target ../ExistingRepo --repo owner/repo [--dry-run]');process.exit(2);
 }
-const target = resolve(targetArg);
-if (!existsSync(join(target,'.git'))) {
-  console.error('Target must be an existing Git checkout with a .git path; refusing to modify unrelated folder.');
-  process.exit(2);
+const path=resolve(where);
+if(!existsSync(join(path,'.git'))){console.error('Existing Git checkout is required');process.exit(2);}
+const tool=join(path,'tools','pstack-observe.mjs');
+const source=join(root,'scripts','pstack-observe.mjs');
+const agentFile=join(path,'AGENTS.md'),ignoreFile=join(path,'.gitignore');
+if(!existsSync(source))throw Error('Bundled Recorder missing');
+if(existsSync(tool)&&readFileSync(tool,'utf8')!==readFileSync(source,'utf8')){
+ console.error('Refusing to overwrite a customized Recorder: '+tool);process.exit(1);
 }
-const toolDir=join(target,'tools');
-const toolPath=join(toolDir,'pstack-observe.mjs');
-const srcPath=join(home,'scripts','pstack-observe.mjs');
-const agentsPath=join(target,'AGENTS.md');
-const ignorePath=join(target,'.gitignore');
-const code = `${markerBegin}
-## pstack workflow observability (installed by CursorPlugins)
-
-When a task explicitly invokes pstack, record its **actual** execution. Never fabricate results or infer completion from a plan. Use the local recorder from the repository root:
-
-\`node tools/pstack-observe.mjs start --repo ${repo} --title "<task title>" --playbook <playbook> --steps "investigate,implement,verify,review" --branch <git-branch>\`
-
-Capture \`RUN_ID=...\` from stdout. Call \`step --run <RUN_ID> --step <step-id> --status running\` before each real stage and use \`--status passed|failed|blocked|skipped --note "..." --evidence https://github.com/...\` after collecting evidence. Finish with \`finish --run <RUN_ID> --status passed|failed|blocked|cancelled\`. A passing run requires every step to have passed or been explicitly skipped; mark blocked or failed honestly.
-
-Runs stay in \`.pstack/observability/runs/\` (gitignored by default). There is **no** automatic public upload. To publish one run, the human must explicitly authorize public metadata disclosure and provide the GH authentication scope; see the parent CursorPlugins docs/fork/PSTACK_DASHBOARD.md. Once approved, use \`publish --run <RUN_ID> --public-ok\` with \`PSTACK_OBSERVE_PUBLICATION_ACK=1\`. Do not upload secrets, full prompts, transcripts, filenames with private context, or personally identifying data.
-
-The dashboard is read-only and evidence is self-reported, not independently verified. If recording fails, report the failure and do not misstate progress.
-${markerEnd}
-`;
-mkdirSync(toolDir, { recursive:true });
-if (existsSync(toolPath) && readFileSync(toolPath,'utf8') !== readFileSync(srcPath,'utf8')) {
-  console.error(`Refusing to overwrite modified tool: ${toolPath}`);
-  process.exit(1);
+const begin='<!-- PSTACK_OBSERVABILITY_BEGIN -->',end='<!-- PSTACK_OBSERVABILITY_END -->';
+const code=[
+begin,'## Optional pstack sidecar observability','',
+'Keep the existing project pstack configuration, rules and vendor locks unchanged.',
+'For actual pstack work, record each stage by running the project-local Recorder:',
+'',
+'    node tools/pstack-observe.mjs start --repo '+repo+' --title "Task" --playbook investigation --steps "inspect,verify,report"',
+'    node tools/pstack-observe.mjs step --run RUN_ID --step inspect --status running',
+'    node tools/pstack-observe.mjs step --run RUN_ID --step inspect --status passed --note "Observed work"',
+'    node tools/pstack-observe.mjs finish --run RUN_ID --status passed',
+'',
+'Use the stable RUN_ID returned by start. Never claim a step passed before its evidence.',
+'Record failures and unavailable tools. The script is not a passive IDE-level hook.',
+'Local .pstack/observability/ files are ignored; nothing publishes automatically.',
+'Public publishing requires explicit project owner approval, --public-ok and',
+'PSTACK_OBSERVE_PUBLICATION_ACK=1. Exclude all secrets, personal data and private transcripts.',
+end,''
+].join('\n');
+const ag0=existsSync(agentFile)?readFileSync(agentFile,'utf8'):'';
+const ig0=existsSync(ignoreFile)?readFileSync(ignoreFile,'utf8'):'';
+let ag=ag0;
+if(ag0.includes(begin)||ag0.includes(end)){
+ const i=ag0.indexOf(begin),j=ag0.indexOf(end);
+ if(i<0||j<i)throw Error('Incomplete observer marker; manual inspection required');
+ console.log('Existing observer section preserved unchanged (including project customizations).');
+}else ag+=((ag.endsWith('\n')?'':'\n')+'\n'+code);
+let ig=ig0;
+if(!ig0.split(/\r?\n/).includes('.pstack/observability/')){
+ ig+=(ig.endsWith('\n')?'':'\n')+'\n# Local pstack observability, not publicly uploaded by default\n.pstack/observability/\n';
 }
-copyFileSync(srcPath,toolPath);
-let agents=existsSync(agentsPath)?readFileSync(agentsPath,'utf8'):'';
-if (agents.includes(markerBegin) || agents.includes(markerEnd)) {
-  const start=agents.indexOf(markerBegin),end=agents.indexOf(markerEnd);
-  if(start<0||end<start)throw new Error('AGENTS.md marker is incomplete; inspect file manually');
-  agents=agents.slice(0,start)+code+agents.slice(end+markerEnd.length);
-} else agents+=`${agents.endsWith('\n')?'':'\n'}\n${code}`;
-writeFileSync(agentsPath,agents);
-let ignore=existsSync(ignorePath)?readFileSync(ignorePath,'utf8'):'';
-if(!ignore.split(/\r?\n/).includes('.pstack/observability/')) {
-  ignore+=`${ignore.endsWith('\n')?'':'\n'}\n# Local pstack run details — do not commit by default\n.pstack/observability/\n`;
-  writeFileSync(ignorePath,ignore);
+const detected=['vendor/pstack/skills/poteto-mode/SKILL.md','.cursor/skills/poteto-mode/SKILL.md','.agents/skills/poteto-mode/SKILL.md']
+  .filter(item=>existsSync(join(path,item)));
+console.log('Existing pstack entrypoints: '+(detected.join(', ')||'not found; plugin installation may be external'));
+if(dry){
+ console.log('DRY RUN: Recorder '+(existsSync(tool)?'already exists':'would be copied')+'; AGENTS.md '+(ag===ag0?'unchanged':'would update')+'; .gitignore '+(ig===ig0?'unchanged':'would update'));
+ console.log('No changes or network calls made.');process.exit(0);
 }
-console.log(`Instrumented ${repo} at ${target}`);
-console.log('Review changes in AGENTS.md, tools/pstack-observe.mjs and .gitignore before committing.');
-console.log('No run started and no data uploaded.');
+mkdirSync(dirname(tool),{recursive:true});
+copyFileSync(source,tool);
+if(ag!==ag0)writeFileSync(agentFile,ag);
+if(ig!==ig0)writeFileSync(ignoreFile,ig);
+console.log('Installed pstack Recorder for '+repo+'. Review git diff before committing. No telemetry published.');

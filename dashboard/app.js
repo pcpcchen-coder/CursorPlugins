@@ -154,7 +154,46 @@ async function renderDetails(summary) {
     panel.append(el('div','notice','狀態與證據由來源 Agent 回報；連結存在不代表已獨立驗證。'));
   } catch(error) { stages.append(el('p','notice',`Cannot load run detail: ${error.message}`)); }
 }
-async function loadData(demo=false) {
+
+/** Public project feeds need no cross-repository write token.
+ * The feed is an explicitly allowlisted GitHub branch, not browser-executed code. */
+async function getPublicRuns() {
+  const settings = await fetch('./public-sources.json', { cache: 'no-store' });
+  if (!settings.ok) throw new Error('Cannot load public source configuration');
+  const config = await settings.json();
+  if (config.schema_version !== 1 || !Array.isArray(config.sources)) throw new Error('Invalid public sources');
+  const output = [], warnings = [];
+  for (const source of config.sources) {
+    const expected = 'https://raw.githubusercontent.com/' + source.repo + '/telemetry/pstack/observability/public/';
+    if (!/^[-\w.]+\/[-\w.]+$/.test(source.repo || '') || source.index_url !== expected + 'index.json') {
+      warnings.push('Rejected untrusted source configuration'); continue;
+    }
+    try {
+      const res = await fetch(source.index_url + '?refresh=' + Date.now(), {cache:'no-store'});
+      if (res.status === 404) continue; // Source installed but not yet publishing.
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const feed = await res.json();
+      if (feed.schema_version !== 1 || feed.repo !== source.repo || !Array.isArray(feed.runs) || feed.runs.length > 100) {
+        throw new Error('Invalid source manifest');
+      }
+      for (const r of feed.runs) {
+        if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(r.run_id || '') || !['running','passed','failed','blocked','cancelled'].includes(r.status)) {
+          throw new Error('Invalid run identity or status');
+        }
+        if (!Number.isFinite(Date.parse(r.updated_at))) throw new Error('Invalid run update time');
+        if (!Number.isInteger(r.passed_steps) || !Number.isInteger(r.total_steps) || r.passed_steps < 0 || r.total_steps < 1 || r.passed_steps > r.total_steps || r.total_steps > 40) {
+          throw new Error('Invalid step counts');
+        }
+        output.push({ ...r, repo:source.repo, path:expected + 'runs/' + r.run_id + '.json?refresh=' + Date.now() });
+      }
+    } catch(error) {
+      warnings.push(source.repo + ': ' + error.message);
+    }
+  }
+  return { runs:output, warnings };
+}
+
+async function loadData(demo=false, preserve=false) {
   $('loadError').textContent='';
   try {
     const url=demo?'./data/demo-index.json':'./data/index.json';
@@ -162,8 +201,16 @@ async function loadData(demo=false) {
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const index=await res.json();
     if(index.schema_version!==1||!Array.isArray(index.runs)||!Array.isArray(index.projects)) throw new Error('Unsupported index schema');
-    state.index=index;state.rows=index.runs;state.mode=demo?'demo':'live';state.selected=null;state.activeRepo='all';
-    $('searchInput').value='';$('statusFilter').value='all';
+    const current = demo ? {runs:[],warnings:[]} : await getPublicRuns();
+    const merged=new Map(index.runs.map(r=>[r.repo+'/'+r.run_id,r]));
+    for(const r of current.runs) merged.set(r.repo+'/'+r.run_id,r);
+    state.index=index;state.rows=[...merged.values()].sort((a,b)=>b.updated_at.localeCompare(a.updated_at));
+    state.mode=demo?'demo':'live';
+    if (!preserve) {
+      state.selected=null;state.activeRepo='all';
+      $('searchInput').value='';$('statusFilter').value='all';
+    }
+    $('loadError').textContent=current.warnings.length ? 'Public feed: '+current.warnings.join(' · ') : '';
     renderStats();renderCoverage();renderRuns();
   } catch(err) { $('loadError').textContent=`Load failed: ${err.message}`; }
 }
@@ -172,3 +219,4 @@ $('reloadBtn').addEventListener('click',()=>loadData(false));
 $('searchInput').addEventListener('input',renderRuns);
 $('statusFilter').addEventListener('change',renderRuns);
 loadData();
+setInterval(()=>{ if(state.mode==='live' && !document.hidden) loadData(false,true); },60000);
