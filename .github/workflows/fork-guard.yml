@@ -1,0 +1,32 @@
+name: Fork guard
+
+on:
+  push:
+    branches:
+      - "custom/**"
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "docs/fork/**"
+      - "scripts/verify-fork.mjs"
+      - ".github/workflows/fork-guard.yml"
+      - ".cursor-plugin/marketplace.json"
+      - ".claude-plugin/marketplace.json"
+      - "pstack/**"
+      - "harness/pstack/**"
+
+permissions:
+  contents: read
+
+jobs:
+  fork-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Verify fork structural invariants
+        run: node scripts/verify-fork.mjs
+      - name: Check upstream-generated Claude Code adapter
+        run: node scripts/generate-pstack-harness-trees.mjs --check
