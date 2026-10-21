@@ -136,3 +136,26 @@ Actions workflow `.github/workflows/pstack-dashboard.yml` tests, generates the i
 - [AIOS CI smoke](https://github.com/pcpcchen-coder/AIOS/actions/runs/39538575650) ran actual recorder unit tests, checked pinned pstack and uploaded a temporary smoke artifact.
 - Central registry shows **INSTALLED**, not **REPORTING**, until a **real pstack engineering Run** is explicitly published with reviewed metadata. The CI smoke does not represent a pstack task.
 - CI artifacts and developer-local runs are not automatically copied to the public Observatory.
+
+
+## Retrofit onboarding, even after pstack has been used
+
+The observer is a **sidecar**. It can be installed after the project has already used pstack for months:
+- Detect existing project-local skills and vendor locks first; do not replace or re-pin them.
+- Run \`node scripts/pstack-observer-install.mjs --target ../ExistingRepo --repo owner/ExistingRepo --dry-run\` to inspect without writing.
+- Re-run without \`--dry-run\` to install the recorder and observability policy. The installer preserves customized, already-installed policy blocks rather than overwriting them.
+- Ask the coding agent to follow the current pstack playbook and call \`start/step/finish\` for **future** operations. Retrofitting cannot reconstruct exact earlier agent steps from Git history.
+- Historic GitHub Issues/PRs can be cited as historical evidence, but **not** as reconstructed, real-time executed steps.
+
+### Public AIOS feed (explicitly approved by the repo owner)
+
+AIOS is an approved **public testing source**. Its own GitHub Action has \`contents:write\` permission only in AIOS and writes sanitized run snapshots to the public \`telemetry/pstack\` branch under \`observability/public/\`. Dashboard fetches that branch's \`index.json\` in the browser and polls every 60 seconds while visible; no PAT, central repo write token or default-branch scheduler is needed.
+
+The feed is public and contains self-reported step outcomes and evidence URLs. It is not independent proof that Cursor, Codex or Claude Code ran as the pstack controller. CI-generated investigation runs are labeled \`investigation-ci\` to distinguish them from real IDE-agent sessions. Normal pstack sessions only enter the feed if instrumented agents publish through an explicitly authenticated, authorized path. The Dashboard displays the data-source error if a feed is unreachable.
+
+Source files:
+- \`dashboard/public-sources.json\` allowlists source repositories.
+- \`dashboard/app.js\` fetches and validates the AIOS feed, without treating a registered but silent repository as REPORTING.
+- AIOS publishes from \`.github/workflows/pstack-public-e2e.yml\` via the same-repository \`GITHUB_TOKEN\` (GitHub Actions workflow, no token in the browser).
+
+Live refresh is best-effort and subject to browser/CDN caching and GitHub outages; it is not a websocket trace.
